@@ -41,55 +41,55 @@ async function main_naive() {
 class Stream {
   constructor(pipeline) {
     this.pipeline = pipeline;
-    this.curResName = null;
+    this.curStage = null;
   }
   
   releaseCurRes() { // Relinguish the current resource
-    if (this.curResName) {
-      this.pipeline.numConcurrency[this.curResName]--;
-      if (this.pipeline.numConcurrencyDecreasedResolver[this.curResName]) {
-        this.pipeline.numConcurrencyDecreasedResolver[this.curResName]();
+    if (this.curStage) {
+      this.pipeline.numConcurrency[this.curStage]--;
+      if (this.pipeline.numConcurrencyDecreasedResolver[this.curStage]) {
+        this.pipeline.numConcurrencyDecreasedResolver[this.curStage]();
       }
     }
   }
   
-  async alloc(resName, maxConcurrency) {
+  async stage(stageName, maxConcurrency) {
     assert(maxConcurrency > 0);
     this.releaseCurRes();
-    while ((this.pipeline.numConcurrency[resName] ?? 0) >= maxConcurrency) {
-      if (! this.pipeline.numConcurrencyDecreasedResolver[resName]) {
-        this.pipeline.numConcurrencyDecreased[resName] =
+    while ((this.pipeline.numConcurrency[stageName] ?? 0) >= maxConcurrency) {
+      if (! this.pipeline.numConcurrencyDecreasedResolver[stageName]) {
+        this.pipeline.numConcurrencyDecreased[stageName] =
           new Promise((resolve) =>
-            this.pipeline.numConcurrencyDecreasedResolver[resName] = resolve);
+            this.pipeline.numConcurrencyDecreasedResolver[stageName] = resolve);
       }
-      await this.pipeline.numConcurrencyDecreased[resName];
-      if (this.pipeline.numConcurrencyDecreasedResolver[resName]) {
-        delete this.pipeline.numConcurrencyDecreasedResolver[resName];
-        delete this.pipeline.numConcurrencyDecreased[resName];
+      await this.pipeline.numConcurrencyDecreased[stageName];
+      if (this.pipeline.numConcurrencyDecreasedResolver[stageName]) {
+        delete this.pipeline.numConcurrencyDecreasedResolver[stageName];
+        delete this.pipeline.numConcurrencyDecreased[stageName];
       }
     }
-    this.curResName = resName;
-    this.pipeline.numConcurrency[resName] = this.pipeline.numConcurrency[resName] || 0;
-    this.pipeline.numConcurrency[resName]++;
+    this.curStage = stageName;
+    this.pipeline.numConcurrency[stageName] = this.pipeline.numConcurrency[stageName] || 0;
+    this.pipeline.numConcurrency[stageName]++;
   }
 }
 
 class Pipeline {
-  constructor(maxConcurrency) {
+  constructor(maxNumStreams) {
     this.numStreams = [];
     this.numStreamsDecreased = null;
     this.numStreamsDecreasedResolver = null;
     this.numConcurrency = {};
     this.numConcurrencyDecreased = {};
     this.numConcurrencyDecreasedResolver = {};
-    this.maxConcurrency = maxConcurrency;
+    this.maxNumStreams = maxNumStreams;
   }
   
-  stream(cb) {
+  pipelined(cb) {
     const pipeline = this;
     return async function () {
       const stream = new Stream(pipeline);
-      if (pipeline.numStreams >= pipeline.maxConcurrency) {
+      if (pipeline.numStreams >= pipeline.maxNumStreams) {
         if (! pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreased =
             new Promise((resolve) =>
@@ -130,10 +130,10 @@ class Pipeline {
 
 async function main_pipeline() {
   const ppl = new Pipeline(4);
-  await dataGenerator(ppl.stream(async (s, data) => {
-    await s.alloc('cpu', 2);
+  await dataGenerator(ppl.pipelined(async (s, data) => {
+    await s.stage('process', 2);
     const res = await f(data);
-    await s.alloc('db', 2);
+    await s.stage('db push', 2);
     await g(res);
   }));
   await ppl.finish();
