@@ -7,7 +7,7 @@ function sleep(ms) {
 }
 
 async function dataGenerator(cb) {
-  for (var i=0; i<4; i++) {
+  for (var i=0; i<5; i++) {
     await sleep(100); // Fetching data from DB...
     try {
       await cb(i);
@@ -25,7 +25,7 @@ async function f(data) {
 }
 
 async function g(data) {
-  await sleep(100); // Writing data to DB...
+  await sleep(200); // Writing data to DB...
   console.log(data);
 }
 
@@ -47,7 +47,6 @@ class Stream {
   releaseCurRes() { // Relinguish the current resource
     if (this.curResName) {
       this.pipeline.numConcurrency[this.curResName]--;
-      console.log((new Date()-ref) + ' relinguishing ' + this.curResName + '. current numcon: ' + JSON.stringify(this.pipeline.numConcurrency));
       if (this.pipeline.numConcurrencyDecreasedResolver[this.curResName]) {
         this.pipeline.numConcurrencyDecreasedResolver[this.curResName]();
       }
@@ -57,8 +56,6 @@ class Stream {
   async alloc(resName, maxConcurrency) {
     assert(maxConcurrency > 0);
     this.releaseCurRes();
-    console.log((new Date()-ref) + ' current numcon: ' + JSON.stringify(this.pipeline.numConcurrency));
-    console.log((new Date()-ref) + ' requesting to alloc ' + resName);
     while ((this.pipeline.numConcurrency[resName] ?? 0) >= maxConcurrency) {
       if (! this.pipeline.numConcurrencyDecreasedResolver[resName]) {
         this.pipeline.numConcurrencyDecreased[resName] =
@@ -74,7 +71,6 @@ class Stream {
     this.curResName = resName;
     this.pipeline.numConcurrency[resName] = this.pipeline.numConcurrency[resName] || 0;
     this.pipeline.numConcurrency[resName]++;
-    console.log((new Date()-ref) + ' allocated ' + resName + '. current numcon: ' + JSON.stringify(this.pipeline.numConcurrency));
   }
 }
 
@@ -94,7 +90,6 @@ class Pipeline {
     return async function () {
       const stream = new Stream(pipeline);
       if (pipeline.numStreams >= pipeline.maxConcurrency) {
-        console.log((new Date()-ref) + ' blocking on new stream creation');
         if (! pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreased =
             new Promise((resolve) =>
@@ -106,7 +101,6 @@ class Pipeline {
           delete pipeline.numStreamsDecreased;
         }
       }
-      console.log((new Date()-ref) + ' new stream created');
       pipeline.numStreams++;
       cb.apply(null, [stream, ...arguments]).then(() => {
         pipeline.numStreams--;
@@ -137,13 +131,10 @@ class Pipeline {
 async function main_pipeline() {
   const ppl = new Pipeline(4);
   await dataGenerator(ppl.stream(async (s, data) => {
-    console.log((new Date()-ref) + ' received ' + data);
     await s.alloc('cpu', 2);
     const res = await f(data);
-    console.log((new Date()-ref) + ' processed ' + data + ' result ' + res);
     await s.alloc('db', 2);
     await g(res);
-    console.log((new Date()-ref) + ' uploaded ' + data);
   }));
   await ppl.finish();
 }
