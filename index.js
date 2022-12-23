@@ -7,8 +7,8 @@ function sleep(ms) {
 }
 
 async function dataGenerator(cb) {
-  for (var i=0; i<2; i++) {
-    await sleep(1000); // Fetching data from DB...
+  for (var i=0; i<4; i++) {
+    await sleep(100); // Fetching data from DB...
     try {
       await cb(i);
     }
@@ -20,12 +20,12 @@ async function dataGenerator(cb) {
 }
 
 async function f(data) {
-  await sleep(2000); // Processing data... (NB: this step would be CPU-intensive in real life)
+  await sleep(300); // Processing data... (NB: this step would be CPU-intensive in real life)
   return data*data;
 }
 
 async function g(data) {
-  await sleep(1000); // Writing data to DB...
+  await sleep(100); // Writing data to DB...
   console.log(data);
 }
 
@@ -46,8 +46,8 @@ class Stream {
   
   releaseCurRes() { // Relinguish the current resource
     if (this.curResName) {
-      console.log((new Date()-ref) + ' relinguishing ' + this.curResName + '. current numcon: ' + JSON.stringify(this.pipeline.numConcurrency));
       this.pipeline.numConcurrency[this.curResName]--;
+      console.log((new Date()-ref) + ' relinguishing ' + this.curResName + '. current numcon: ' + JSON.stringify(this.pipeline.numConcurrency));
       if (this.pipeline.numConcurrencyDecreasedResolver[this.curResName]) {
         this.pipeline.numConcurrencyDecreasedResolver[this.curResName]();
       }
@@ -89,23 +89,25 @@ class Pipeline {
     this.maxConcurrency = maxConcurrency;
   }
   
-  async stream(cb) {
-    const stream = new Stream(this);
-    if (this.numStreams >= this.maxConcurrency) {
-      if (! this.numStreamsDecreasedResolver) {
-        this.numStreamsDecreased =
-          new Promise((resolve) =>
-            this.numStreamsDecreasedResolver = resolve);
-      }
-      await this.numStreamsDecreased;
-      if (this.numStreamsDecreasedResolver) {
-        delete this.numStreamsDecreasedResolver;
-        delete this.numStreamsDecreased;
-      }
-    }
-    this.numStreams++;
+  stream(cb) {
     const pipeline = this;
     return async function () {
+      const stream = new Stream(pipeline);
+      if (pipeline.numStreams >= pipeline.maxConcurrency) {
+        console.log((new Date()-ref) + ' blocking on new stream creation');
+        if (! pipeline.numStreamsDecreasedResolver) {
+          pipeline.numStreamsDecreased =
+            new Promise((resolve) =>
+              pipeline.numStreamsDecreasedResolver = resolve);
+        }
+        await pipeline.numStreamsDecreased;
+        if (pipeline.numStreamsDecreasedResolver) {
+          delete pipeline.numStreamsDecreasedResolver;
+          delete pipeline.numStreamsDecreased;
+        }
+      }
+      console.log((new Date()-ref) + ' new stream created');
+      pipeline.numStreams++;
       cb.apply(null, [stream, ...arguments]).then(() => {
         pipeline.numStreams--;
         if (pipeline.numStreamsDecreasedResolver) {
@@ -133,10 +135,10 @@ class Pipeline {
 }
 
 async function main_pipeline() {
-  const ppl = new Pipeline(15);
-  await dataGenerator(await ppl.stream(async (s, data) => {
+  const ppl = new Pipeline(4);
+  await dataGenerator(ppl.stream(async (s, data) => {
     console.log((new Date()-ref) + ' received ' + data);
-    await s.alloc('cpu', 1);
+    await s.alloc('cpu', 2);
     const res = await f(data);
     console.log((new Date()-ref) + ' processed ' + data + ' result ' + res);
     await s.alloc('db', 2);
