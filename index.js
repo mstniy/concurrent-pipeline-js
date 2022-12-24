@@ -1,43 +1,5 @@
 const assert = require('node:assert').strict;
 
-const ref = new Date();
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function dataGenerator(cb) {
-  for (var i=0; i<5; i++) {
-    await sleep(100); // Fetching data from DB...
-    try {
-      await cb(i);
-    }
-    catch (e) {
-      console.error(e);
-    }
-    //await sleep(100000); // Fetching data from DB...
-  }
-}
-
-async function f(data) {
-  await sleep(300); // Processing data... (NB: this step would be CPU-intensive in real life)
-  return data*data;
-}
-
-async function g(data) {
-  await sleep(200); // Writing data to DB...
-  console.log(data);
-}
-
-async function main_naive() {
-  await dataGenerator(async (data) => {
-    const res = await f(data);
-    await g(res);
-  });
-}
-
-// ---------------------------------------------------------------------
-
 class Stream {
   constructor(pipeline) {
     this.pipeline = pipeline;
@@ -111,7 +73,7 @@ class Pipeline {
       });
     };
   }
-  
+
   async finish() {
     while (this.numStreams > 0) {
       if (! this.numStreamsDecreasedResolver) {
@@ -128,15 +90,4 @@ class Pipeline {
   }
 }
 
-async function main_pipeline() {
-  const ppl = new Pipeline(4);
-  await dataGenerator(ppl.pipelined(async (s, data) => {
-    await s.stage('process', 2);
-    const res = await f(data);
-    await s.stage('db push', 2);
-    await g(res);
-  }));
-  await ppl.finish();
-}
-
-main_pipeline().then(r => {process.exitCode = r;}).catch(e => {console.error(e); process.exitCode = 1;});
+module.exports = Pipeline;
