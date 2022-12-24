@@ -4,38 +4,43 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function dataGenerator(cb) {
-  for (var i=0; i<5; i++) {
-    await sleep(100); // Fetching data from DB...
-    await cb(i);
-  }
+async function extract(index) {
+  await sleep(100); // Reading data from DB...
+  return 2*index+1;
 }
 
-async function f(data) {
-  await sleep(300); // Processing data... (NB: this step would be CPU-intensive in real life)
+async function transform(data) {
+  await sleep(300); // NB: this step would be CPU-intensive in a real application
   return data*data;
 }
 
-async function g(data) {
+async function load(data) {
   await sleep(200); // Writing data to DB...
   console.log(data);
 }
 
+const NUM_DATA = 5;
+
 async function main_naive() {
-  await dataGenerator(async (data) => {
-    const res = await f(data);
-    await g(res);
-  });
+  for (var i=0; i<NUM_DATA; i++) {
+    const data = await extract(i);
+    const res = await transform(data);
+    await load(res);
+  };
 }
 
 async function main_pipeline() {
-  const ppl = new Pipeline(4);
-  await dataGenerator(ppl.pipelined(async (s, data) => {
-    await s.stage('process', 2);
-    const res = await f(data);
-    await s.stage('db push', 2);
-    await g(res);
-  }));
+  const ppl = new Pipeline(5);
+  for (var i=0; i<NUM_DATA; i++) {
+    await (ppl.pipelined(async (s, i) => {
+      await s.stage('extract', 2);
+      const data = await extract(i);
+      await s.stage('transform', 1);
+      const res = await transform(data);
+      await s.stage('load', 2);
+      await load(res);
+    })(i));
+  }
   await ppl.finish();
 }
 

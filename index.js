@@ -24,8 +24,9 @@ class Stream {
           new Promise((resolve) =>
             this.pipeline.numConcurrencyDecreasedResolver[stageName] = resolve);
       }
-      await this.pipeline.numConcurrencyDecreased[stageName];
-      if (this.pipeline.numConcurrencyDecreasedResolver[stageName]) {
+      const promise = this.pipeline.numConcurrencyDecreased[stageName];
+      await promise;
+      if (this.pipeline.numConcurrencyDecreased[stageName] === promise) {
         delete this.pipeline.numConcurrencyDecreasedResolver[stageName];
         delete this.pipeline.numConcurrencyDecreased[stageName];
       }
@@ -57,8 +58,9 @@ class Pipeline {
             new Promise((resolve) =>
               pipeline.numStreamsDecreasedResolver = resolve);
         }
-        await pipeline.numStreamsDecreased;
-        if (pipeline.numStreamsDecreasedResolver) {
+        const promise = pipeline.numStreamsDecreased;
+        await promise;
+        if (pipeline.numStreamsDecreased === promise) {
           delete pipeline.numStreamsDecreasedResolver;
           delete pipeline.numStreamsDecreased;
         }
@@ -81,8 +83,9 @@ class Pipeline {
           new Promise((resolve) =>
             this.numStreamsDecreasedResolver = resolve);
       }
-      await this.numStreamsDecreased;
-      if (this.numStreamsDecreasedResolver) {
+      const promise = this.numStreamsDecreased;
+      await promise;
+      if (this.numStreamsDecreased === promise) {
         delete this.numStreamsDecreasedResolver;
         delete this.numStreamsDecreased;
       }
