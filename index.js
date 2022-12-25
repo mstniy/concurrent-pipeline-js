@@ -66,16 +66,17 @@ class Pipeline {
         }
       }
       pipeline.numStreams++;
-      const asyncPromise = cb.apply(null, [stream, ...arguments]).finally(() => {
+      var asyncPromise = cb.apply(null, [stream, ...arguments]);
+      if (catch_cb) {
+        asyncPromise = asyncPromise.catch(catch_cb);
+      }
+      asyncPromise.finally(() => {
         pipeline.numStreams--;
         if (pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreasedResolver();
         }
         stream.releaseCurRes();
       });
-      if (catch_cb) {
-        asyncPromise.catch(catch_cb);
-      }
     };
   }
 
