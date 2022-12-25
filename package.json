@@ -1,0 +1,19 @@
+{
+  "name": "concurrent-pipeline",
+  "version": "1.0.0",
+  "description": "Painless concurrent pipelines",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "concurrent",
+    "pipeline",
+    "etl"
+  ],
+  "author": "Kartal Kaan Bozdogan",
+  "license": "ISC"
+}
