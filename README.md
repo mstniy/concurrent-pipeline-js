@@ -15,9 +15,9 @@ It all starts by creating a `Pipeline`:
 
 The argument passed to `Pipeline` controls the maximum number of streams that can ever exist concurrently. This allows easy implementation of back pressure.
 
-To start a new `Stream`, pass your code to  `Pipeline.pipelined` and `await` on the function it returns:
+To start a new `Stream`, pass your code to `Pipeline.pipelined` and `await` on the function it returns:
 
-    await ppl.pipelined(async (stream, ...your args) => {
+    await ppl.pipelined(async (stage, ...your args) => {
       ... your code here
     })(... your pipeline args);
     
@@ -26,9 +26,9 @@ To start a new `Stream`, pass your code to  `Pipeline.pipelined` and `await` on 
 
 Inside the stream code, you can define stages:
 
-    await s.stage('process data', 3);
+    await stage('process data', 3);
     
-Diving the work into stages allows streams in different stages of execution to run concurrently. Note that the second argument controls the maximum number of streams to be in this stage.
+Diving the work into stages allows you to set different concurrency limits to different stages, in this snippet, 3.
 
 Finally, to block execution until all the streams in the pipeline have finished:
 
