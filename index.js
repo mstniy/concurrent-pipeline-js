@@ -48,7 +48,7 @@ class Pipeline {
     this.maxNumStreams = maxNumStreams;
   }
   
-  pipelined(cb) {
+  pipelined(cb, catch_cb) {
     const pipeline = this;
     return async function () {
       const stream = new Stream(pipeline);
@@ -66,13 +66,16 @@ class Pipeline {
         }
       }
       pipeline.numStreams++;
-      cb.apply(null, [stream, ...arguments]).then(() => {
+      const asyncPromise = cb.apply(null, [stream, ...arguments]).finally(() => {
         pipeline.numStreams--;
         if (pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreasedResolver();
         }
         stream.releaseCurRes();
       });
+      if (catch_cb) {
+        asyncPromise.catch(catch_cb);
+      }
     };
   }
 
