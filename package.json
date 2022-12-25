@@ -1,8 +1,12 @@
 {
   "name": "concurrent-pipeline",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Painless concurrent pipelines",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mstniy/concurrent-pipeline-js"
+  },
   "files": [
     "index.js"
   ],
