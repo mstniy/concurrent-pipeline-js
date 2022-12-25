@@ -38,7 +38,7 @@ Finally, to block execution until all the streams in the pipeline have finished:
 
 While creating a stream, you can specify an exception handler for that stream by passing a second argument to `Pipeline.pipelined`:
 
-    await ppl.pipelined(async (stream, ...your args) => {
+    await ppl.pipelined(async (stage, ...your args) => {
       ... your code here
     }, (e) => {
       ... handle the exception here

@@ -1,6 +1,6 @@
 {
   "name": "concurrent-pipeline",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Painless concurrent pipelines",
   "main": "index.js",
   "repository": {
