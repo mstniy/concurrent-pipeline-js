@@ -66,7 +66,7 @@ class Pipeline {
         }
       }
       pipeline.numStreams++;
-      var asyncPromise = cb.apply(null, [stream, ...arguments]);
+      var asyncPromise = cb.apply(null, [stream.stage.bind(stream), ...arguments]);
       if (catch_cb) {
         asyncPromise = asyncPromise.catch(catch_cb);
       }

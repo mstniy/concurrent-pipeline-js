@@ -29,7 +29,7 @@ async function main_naive() {
 async function main_pipeline() {
   const ppl = new Pipeline(3);
   for (var i=0; i<NUM_DATA; i++) {
-    await (ppl.pipelined(async (s, i) => {
+    await (ppl.pipelined(async (stage, i) => {
       const res = await f(i);
       console.log(res);
     }, (e) => {

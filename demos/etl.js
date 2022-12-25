@@ -32,12 +32,12 @@ async function main_naive() {
 async function main_pipeline() {
   const ppl = new Pipeline(5);
   for (var i=0; i<NUM_DATA; i++) {
-    await (ppl.pipelined(async (s, i) => {
-      await s.stage('extract', 2);
+    await (ppl.pipelined(async (stage, i) => {
+      await stage('extract', 2);
       const data = await extract(i);
-      await s.stage('transform', 1);
+      await stage('transform', 1);
       const res = await transform(data);
-      await s.stage('load', 2);
+      await stage('load', 2);
       await load(res);
     })(i));
   }
