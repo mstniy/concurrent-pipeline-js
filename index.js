@@ -39,6 +39,7 @@ class Stream {
 
 class Pipeline {
   constructor(maxNumStreams) {
+    this.numStreamRequests = 0;
     this.numStreams = [];
     this.numStreamsDecreased = null;
     this.numStreamsDecreasedResolver = null;
@@ -52,6 +53,7 @@ class Pipeline {
     const pipeline = this;
     return async function () {
       const stream = new Stream(pipeline);
+      pipeline.numStreamRequests++;
       if (pipeline.numStreams >= pipeline.maxNumStreams) {
         if (! pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreased =
@@ -65,6 +67,7 @@ class Pipeline {
           delete pipeline.numStreamsDecreased;
         }
       }
+      pipeline.numStreamRequests--;
       pipeline.numStreams++;
       var asyncPromise = cb.apply(null, [stream.stage.bind(stream), ...arguments]);
       if (catch_cb) {
@@ -81,7 +84,7 @@ class Pipeline {
   }
 
   async finish() {
-    while (this.numStreams > 0) {
+    while (this.numStreams > 0 || this.numStreamRequests > 0) {
       if (! this.numStreamsDecreasedResolver) {
         this.numStreamsDecreased =
           new Promise((resolve) =>
