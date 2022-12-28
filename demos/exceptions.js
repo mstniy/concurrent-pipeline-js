@@ -21,7 +21,7 @@ async function main_naive() {
       console.log(res);
     }
     catch (e) {
-      await sleep(250);
+      await sleep(500);
       console.error(e);
     }
   };
