@@ -70,6 +70,9 @@ class Pipeline {
       pipeline.numStreamRequests--;
       pipeline.numStreams++;
       var asyncPromise = cb.apply(null, [stream.stage.bind(stream), ...arguments]);
+      asyncPromise = asyncPromise.finally(() => {
+        stream.releaseCurRes();
+      });
       if (catch_cb) {
         asyncPromise = asyncPromise.catch(catch_cb);
       }
@@ -78,7 +81,6 @@ class Pipeline {
         if (pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreasedResolver();
         }
-        stream.releaseCurRes();
       });
     };
   }

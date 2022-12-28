@@ -45,3 +45,16 @@ async function main_pipeline() {
 }
 
 main_pipeline().then(r => {process.exitCode = r;}).catch(e => {console.error(e); process.exitCode = 1;});
+
+/*
+
+Output:
+1
+9
+25
+49
+81
+
+Should finish in ~1.8 seconds
+
+*/

@@ -5,7 +5,7 @@ function sleep(ms) {
 }
 
 async function f(index) {
-  await sleep(100);
+  await sleep(250);
   if (index % 2) {
     throw 'Oh no! Exception';
   }
@@ -21,6 +21,7 @@ async function main_naive() {
       console.log(res);
     }
     catch (e) {
+      await sleep(250);
       console.error(e);
     }
   };
@@ -30,9 +31,11 @@ async function main_pipeline() {
   const ppl = new Pipeline(3);
   for (var i=0; i<NUM_DATA; i++) {
     await (ppl.pipelined(async (stage, i) => {
+      await stage('a', 1);
       const res = await f(i);
       console.log(res);
-    }, (e) => {
+    }, async (e) => {
+      await sleep(500);
       console.error(e);
     })(i));
   }
@@ -40,3 +43,16 @@ async function main_pipeline() {
 }
 
 main_pipeline().then(r => {process.exitCode = r;}).catch(e => {console.error(e); process.exitCode = 1;});
+
+/*
+
+Output:
+0
+4
+Oh no! Exception
+16
+Oh no! Exception
+
+Should finish in ~1.5 seconds
+
+*/
