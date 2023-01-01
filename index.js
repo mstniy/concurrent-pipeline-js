@@ -55,9 +55,9 @@ class Pipeline {
   
   pipelined(cb, catch_cb) {
     const pipeline = this;
-    const stageId = this.lastStageId++;
     return async function () {
       const stream = new Stream(pipeline);
+      const stageId = pipeline.lastStageId++;
       pipeline.numStreamRequests++;
       if (pipeline.numStreams >= pipeline.maxNumStreams) {
         if (! pipeline.numStreamsDecreasedResolver) {
