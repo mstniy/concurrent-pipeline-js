@@ -44,7 +44,7 @@ While creating a stream, you can specify an exception handler for that stream by
       ... handle the exception here
     })(... your pipeline args);
 
-If any stream ends with an unhandled exception, be it due to the lack of an exception handler or the exception handler itself throwing an exception, the call to `finish()` will throw an array of unhandled exceptions, along with the corresponding stream ids.
+If any stream ends with an unhandled exception, be it due to the lack of an exception handler or the exception handler itself throwing an exception, calling `finish()` or `pipelined()` will throw an array of unhandled exceptions, along with the corresponding stream ids. Note that in this case, `pipelined()` will wait for all running streams to finish before throwing the exception.
     
 ### Samples
 

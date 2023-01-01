@@ -73,6 +73,9 @@ class Pipeline {
         }
       }
       pipeline.numStreamRequests--;
+      if (pipeline.exceptions.length > 0) {
+        await pipeline.finish();
+      }
       pipeline.numStreams++;
       var asyncPromise = cb.apply(null, [stream.stage.bind(stream), ...arguments]);
       asyncPromise = asyncPromise.finally(() => {
