@@ -1,5 +1,7 @@
 const assert = require('node:assert').strict;
 
+class PipelineExceptions extends Array {}
+
 class Stream {
   constructor(pipeline) {
     this.pipeline = pipeline;
@@ -48,7 +50,7 @@ class Pipeline {
     this.numConcurrencyDecreasedResolver = {};
     this.maxNumStreams = maxNumStreams;
     this.lastStageId = 0;
-    this.exceptions = [];
+    this.exceptions = new PipelineExceptions();
   }
   
   pipelined(cb, catch_cb) {
@@ -107,10 +109,12 @@ class Pipeline {
     }
     if (this.exceptions.length > 0) {
       const exceptions = this.exceptions;
-      this.exceptions = [];
+      this.exceptions = new PipelineExceptions();
       throw exceptions;
     }
   }
 }
+
+Pipeline.PipelineExceptions = PipelineExceptions;
 
 module.exports = Pipeline;
