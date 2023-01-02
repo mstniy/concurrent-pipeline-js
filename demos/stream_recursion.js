@@ -7,15 +7,18 @@ function sleep(ms) {
 const NUM_DATA = 5;
 
 async function task(stage, ppl, index) {
+  await stage('a', 1);
   await sleep(100);
-  console.log(index);
   if (index+1 < NUM_DATA) {
     ppl.pipelined(task)(ppl, index+1); // Do not await here to avoid deadlock
   }
+  await stage('b', 3);
+  await sleep(100);
+  console.log(index);
 }
 
 async function main_pipeline() {
-  const ppl = new Pipeline(1);
+  const ppl = new Pipeline(5);
   await ppl.pipelined(task)(ppl, 0);
   await ppl.finish();
 }
@@ -30,8 +33,7 @@ Output:
 2
 3
 4
-5
 
-Should finish in ~0.5 seconds
+Should finish in ~0.6 seconds
 
 */
