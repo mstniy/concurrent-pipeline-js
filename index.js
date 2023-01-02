@@ -49,15 +49,15 @@ class Pipeline {
     this.numConcurrencyDecreased = {};
     this.numConcurrencyDecreasedResolver = {};
     this.maxNumStreams = maxNumStreams;
-    this.lastStageId = 0;
+    this.lastStreamId = 0;
     this.exceptions = new PipelineExceptions();
   }
   
-  pipelined(cb, catch_cb) {
+  pipelined(cb) {
     const pipeline = this;
     return async function () {
       const stream = new Stream(pipeline);
-      const stageId = pipeline.lastStageId++;
+      const streamId = pipeline.lastStreamId++;
       pipeline.numStreamRequests++;
       if (pipeline.numStreams >= pipeline.maxNumStreams) {
         if (! pipeline.numStreamsDecreasedResolver) {
@@ -78,16 +78,11 @@ class Pipeline {
       }
       pipeline.numStreams++;
       var asyncPromise = cb.apply(null, [stream.stage.bind(stream), ...arguments]);
-      asyncPromise = asyncPromise.finally(() => {
-        stream.releaseCurRes();
-      });
-      if (catch_cb) {
-        asyncPromise = asyncPromise.catch(catch_cb);
-      }
       asyncPromise.catch((e) => {
-        pipeline.exceptions.push({stageId, exception: e});
+        pipeline.exceptions.push({streamId, exception: e});
       }).
       finally(() => {
+        stream.releaseCurRes();
         pipeline.numStreams--;
         if (pipeline.numStreamsDecreasedResolver) {
           pipeline.numStreamsDecreasedResolver();

@@ -36,15 +36,9 @@ Finally, to block execution until all the streams in the pipeline have finished:
 
 ### Exception handling
 
-While creating a stream, you can specify an exception handler for that stream by passing a second argument to `Pipeline.pipelined`:
+If any stream ends with an unhandled exception, calling `finish()` or `pipelined()` will throw an array of unhandled exceptions, along with the corresponding stream ids. Note that in this case, `pipelined()` will wait for all running streams to finish before throwing the exception to make sure there are no "dangling" streams left.
 
-    await ppl.pipelined(async (stage, ...your args) => {
-      ... your code here
-    }, (e) => {
-      ... handle the exception here
-    })(... your pipeline args);
-
-If any stream ends with an unhandled exception, be it due to the lack of an exception handler or the exception handler itself throwing an exception, calling `finish()` or `pipelined()` will throw an array of unhandled exceptions, along with the corresponding stream ids. Note that in this case, `pipelined()` will wait for all running streams to finish before throwing the exception.
+You may want to add a new stage for exception handling, depending on the logic of your application.
     
 ### Samples
 
