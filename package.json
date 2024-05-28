@@ -9,7 +9,8 @@
     "url": "https://github.com/mstniy/concurrent-pipeline-js"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
